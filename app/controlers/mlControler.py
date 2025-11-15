@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 import os
 from pathlib import Path
-from app.types.mlTypes import PredictionInput, PredictionResponse, BatchPredictionInput, BatchPredictionResponse
+from app.types.mlTypes import PredictionInput, PredictionResponse
 
 router = APIRouter(
     prefix="/ml",
@@ -54,36 +54,6 @@ def predict(input_data: PredictionInput):
         prediction = int(round(model.predict(df)[0]))
         
         return PredictionResponse(prediction=prediction)
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
-
-
-@router.post("/predict/batch", response_model=BatchPredictionResponse)
-def predict_batch(input_data: BatchPredictionInput):
-    """
-    Predict endpoint for batch predictions.
-    
-    Args:
-        input_data: BatchPredictionInput with a list of data points
-        
-    Returns:
-        BatchPredictionResponse with list of predictions
-    """
-    if model is None:
-        raise HTTPException(
-            status_code=503, 
-            detail="Model not loaded. Please ensure model.joblib exists in the project directory."
-        )
-    
-    try:
-        # Convert input to DataFrame
-        df = pd.DataFrame([item.model_dump() for item in input_data.data])
-        
-        # Make predictions
-        predictions = [int(p) for p in model.predict(df)]
-        
-        return BatchPredictionResponse(predictions=predictions)
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")

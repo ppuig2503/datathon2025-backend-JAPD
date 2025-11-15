@@ -1,3 +1,6 @@
+from pydantic import BaseModel
+from typing import List
+
 class PredictionInput(BaseModel):
     """Input schema for prediction requests"""
     product_A_sold_in_the_past: float

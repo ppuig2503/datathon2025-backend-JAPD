@@ -13,3 +13,5 @@ pip install httpx
 pip install python-dotenv
 pip install scikit-image
 pip install lime
+pip install shap
+pip install pdpbox

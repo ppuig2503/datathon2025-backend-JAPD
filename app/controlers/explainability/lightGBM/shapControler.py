@@ -57,6 +57,7 @@ async def get_shap_global_explanation(input_data: PredictionInput):
         pred = float(model.predict(X_test)[0])
 
     return {
+        "SHAP"
         "prediction": pred,
         "base_value": float(base_value),
         "shap_values": shap_dict,

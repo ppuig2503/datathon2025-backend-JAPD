@@ -1,3 +1,6 @@
+from pydantic import BaseModel
+from typing import List
+
 class PredictionInput(BaseModel):
     """Input schema for prediction requests"""
     product_A_sold_in_the_past: float
@@ -14,7 +17,6 @@ class PredictionInput(BaseModel):
     competitor_Z: int
     competitor_X: int
     competitor_Y: int
-    cust_in_iberia: int
 
 
 class PredictionResponse(BaseModel):

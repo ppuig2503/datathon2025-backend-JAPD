@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 class AnswerInput(BaseModel):
     """Input schema for answer requests"""
     question: str

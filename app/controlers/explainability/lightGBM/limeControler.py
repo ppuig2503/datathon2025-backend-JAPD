@@ -62,6 +62,7 @@ async def get_lime_explanation(input_data: PredictionInput):
     explanation = dict(exp.as_list())
     
     return {
+        "Model": "LIME",
         "prediction": prediction,
         "probability": probability,
         "explanation": explanation

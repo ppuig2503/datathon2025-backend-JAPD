@@ -63,6 +63,7 @@ async def get_pdp_explanation(input_data: PredictionInput):
     if hasattr(pdp_iso, "ice_lines") and pdp_iso.ice_lines is not None:
         explanation["ice_lines"] = pdp_iso.ice_lines.tolist()
     response = {
+        "Model": "PDP",
         "prediction": prediction,
         "probability": probability,
         "pdp_explanation": explanation

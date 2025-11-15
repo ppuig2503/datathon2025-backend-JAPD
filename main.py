@@ -1,12 +1,16 @@
+from app.controlers.explainability.lightGBM import limeControler , shapControler, pdpControler
 from fastapi import FastAPI
-from app.controlers import mlControler, openAiControler, explainabilityControler
+from app.controlers import mlControler, openAiControler
 
 app = FastAPI(title="Datathon Backend API")
 
 # Include routers
 app.include_router(mlControler.router)
 app.include_router(openAiControler.router)
-app.include_router(explainabilityControler.router)
+app.include_router(limeControler.router)
+app.include_router(shapControler.router)
+app.include_router(pdpControler.router)
+
 
 @app.on_event("startup")
 async def startup_event():

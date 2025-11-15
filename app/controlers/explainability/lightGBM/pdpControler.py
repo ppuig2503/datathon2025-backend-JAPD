@@ -33,8 +33,10 @@ async def get_pdp_explanation(input_data: PredictionInput):
     X_train = joblib.load("models/lgbm/X_train_sample.joblib")
     model = mlControler.model
     model.n_classes_ = 2  # Ensure model has n_classes_ attribute
+    X_test = joblib.load("models/lgbm/X_test.joblib")
     # Convert input to DataFrame
     input_df = pd.DataFrame([input_data.model_dump()])
+    X_test = pd.concat([X_test, input_df], ignore_index=True)
 
     # Prediction and probability
     prediction = float(model.predict(input_df)[0])
@@ -46,7 +48,8 @@ async def get_pdp_explanation(input_data: PredictionInput):
     # --- Compute PDP correctly using public API ---
     pdp_iso = pdp.PDPIsolate(
         model=model,
-        df=X_train,
+        df=X_test
+        ,
         model_features=X_train.columns.tolist(),
         feature="product_A_recommended",
         feature_name="product_A_recommended",

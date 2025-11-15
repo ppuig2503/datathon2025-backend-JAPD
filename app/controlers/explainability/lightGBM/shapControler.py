@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from app.types.mlTypes import PredictionInput
 from app.controlers import mlControler
+from data import data
 
 
 router = APIRouter(prefix="/ml", tags=["Explainability"])
@@ -55,6 +56,12 @@ async def get_shap_global_explanation(input_data: PredictionInput):
         pred = float(model.predict_proba(X_test)[0][1])
     except:
         pred = float(model.predict(X_test)[0])
+
+    # Store SHAP global results in data.py
+    data.set_global_data(
+        shap_global=shap_dict,
+        shap_base_value=float(base_value)
+    )
 
     return {
         "Model": "SHAP",

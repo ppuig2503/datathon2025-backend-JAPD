@@ -8,6 +8,7 @@ from pathlib import Path
 
 from app.controlers import mlControler
 from app.types.mlTypes import PredictionInput
+from data import data
 
 router = APIRouter(prefix="/ml", tags=["Explainability"])
 
@@ -62,6 +63,10 @@ async def get_pdp_explanation(input_data: PredictionInput):
     # Optional: include ICE if present
     if hasattr(pdp_iso, "ice_lines") and pdp_iso.ice_lines is not None:
         explanation["ice_lines"] = pdp_iso.ice_lines.tolist()
+    
+    # Store PDP results in data.py
+    data.set_global_data(pdp_data=explanation)
+    
     response = {
         "Model": "PDP",
         "prediction": prediction,

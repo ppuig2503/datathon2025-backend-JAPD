@@ -128,38 +128,49 @@ def generate_global_explanation_text():
         # Get data from data.py
         global_data = data.get_global_data()
         
-        # Validate that data exists
-        if global_data["feature_importance"] is None:
-            raise HTTPException(status_code=400, detail="No global explainability data available. Please populate global data first.")
-        
-        # Format the feature importance
-        importance_text = "\n".join(
-            [f"- {feature}: {importance:.4f}" for feature, importance in global_data["feature_importance"].items()]
-        )
+        # Validate that at least SHAP or PDP data exists
+        if global_data["shap_global"] is None and global_data["pdp_data"] is None:
+            raise HTTPException(status_code=400, detail="No global explainability data available. Please call /explain_shap or /explain_pdp endpoints first.")
         
         # Format SHAP global if provided
         shap_text = ""
         if global_data["shap_global"]:
-            shap_text = "\n\nIMPORTANCIAS GLOBALES SHAP:\n" + "\n".join(
+            shap_text = "IMPORTANCIAS GLOBALES SHAP (contribución promedio de cada feature):\n" + "\n".join(
                 [f"- {feature}: {value:.4f}" for feature, value in global_data["shap_global"].items()]
             )
+            if global_data["shap_base_value"] is not None:
+                shap_text += f"\n\nValor base del modelo: {global_data['shap_base_value']:.4f}"
         
-        # Include PDP summary if provided
+        # Format PDP data if provided
         pdp_text = ""
-        if global_data["pdp_summary"]:
-            pdp_text = f"\n\nRESUMEN DE PARTIAL DEPENDENCE PLOTS (PDP):\n{global_data['pdp_summary']}"
+        if global_data["pdp_data"]:
+            pdp_data = global_data["pdp_data"]
+            pdp_text = "\n\nPARTIAL DEPENDENCE PLOT (PDP):\n"
+            pdp_text += f"Feature analizada: {pdp_data.get('feature_type', 'N/A')}\n"
+            if pdp_data.get('grids') and pdp_data.get('pdp_values'):
+                # Summarize PDP trend
+                grids = pdp_data['grids']
+                values = pdp_data['pdp_values']
+                pdp_text += f"Rango de valores: {min(grids):.2f} a {max(grids):.2f}\n"
+                pdp_text += f"Probabilidad predicha varía de {min(values):.4f} a {max(values):.4f}\n"
+                # Determine trend
+                if values[-1] > values[0]:
+                    pdp_text += "Tendencia: A mayor valor de esta feature, MAYOR probabilidad de ganar\n"
+                elif values[-1] < values[0]:
+                    pdp_text += "Tendencia: A mayor valor de esta feature, MENOR probabilidad de ganar\n"
+                else:
+                    pdp_text += "Tendencia: Esta feature tiene poco impacto en la probabilidad\n"
         
         # Create the user prompt with the global explanation data
         user_prompt = f"""Genera un texto explicativo ESPECÍFICO sobre los resultados de explainability GLOBAL del modelo de predicción de oportunidades de venta:
 
-IMPORTANCIA DE FEATURES (Feature Importance):
-{importance_text}{shap_text}{pdp_text}
+{shap_text}{pdp_text}
 
 Este texto se mostrará en una página de resultados. Debe ser:
 - ESPECÍFICO sobre el comportamiento GENERAL del modelo
-- Explicar QUÉ variables son más importantes en el modelo
+- Explicar QUÉ variables son más importantes en el modelo (según SHAP)
 - Describir CÓMO cada variable importante influye en las predicciones en general
-- Si hay información de PDP, explicar las tendencias (ej: "a mayor X, mayor probabilidad de ganar")
+- Si hay información de PDP, explicar las tendencias observadas (ej: "a mayor X, mayor probabilidad de ganar")
 - Identificar las 5-7 features más importantes y su impacto
 - Traducir a lenguaje de negocio con ejemplos prácticos
 - 3-5 párrafos máximo

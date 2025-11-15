@@ -14,47 +14,60 @@ router = APIRouter(prefix="/ml", tags=["Explainability"])
 
 def predict_pdp(m, df):
     df = df[m.model_features] if hasattr(m, "model_features") else df
-    return np.asarray(m.predict(df)).reshape(-1)
+    return np.asarray(m.predict(df)).reshape(-1)   # 1D output for regression/probs
 
 
 @router.post("/explain_pdp", summary="Get PDP for a feature")
 async def get_pdp_explanation(input_data: PredictionInput):
     """
     Generate PDP explanations for a given feature.
-    Instead of returning a plot, return the raw PDP data so an LLM or frontend can interpret it.
+    Returns raw PDP values in JSON (LLM-friendly).
     """
-    from pdpbox import pdp
     import joblib
     import numpy as np
-    
+    import pandas as pd
+    from pdpbox import pdp
+
+    # Load training sample and model
     X_train = joblib.load("models/lgbm/X_train_sample.joblib")
     model = mlControler.model
-    X_test = joblib.load("models/lgbm/X_test.joblib")
-    # Get prediction and probability for the input
-    inputD = pd.DataFrame([input_data.model_dump()])
-    X_test = pd.concat([X_test, inputD], ignore_index=True)
-    prediction = int(round(model.predict(inputD)[0]))
+    model.n_classes_ = 2  # Ensure model has n_classes_ attribute
+    # Convert input to DataFrame
+    input_df = pd.DataFrame([input_data.model_dump()])
+
+    # Prediction and probability
+    prediction = float(model.predict(input_df)[0])
     if hasattr(model, "predict_proba"):
-        probability = float(model.predict_proba(inputD)[0, 1])
+        probability = float(model.predict_proba(input_df)[0, 1])
     else:
         probability = prediction
 
-    # --- Generate PDP as regression ---
+    # --- Compute PDP correctly using public API ---
     pdp_iso = pdp.PDPIsolate(
         model=model,
-        df=X_test,
+        df=X_train,
         model_features=X_train.columns.tolist(),
         feature="product_A_recommended",
         feature_name="product_A_recommended",
         pred_func=predict_pdp,
-        
-        num_grid_points=3600 # lo tratamos como regresión sobre P(Win)
-        )
+        num_grid_points=3600   # reasonable size
+    )
 
-    response = {
-        "explanation": {
-        "grids": pdp_iso.feature_grids.tolist() if hasattr(pdp_iso, "feature_grids") else None,
-        "pdp_values": pdp_iso.results.tolist(),
-            }
-        }
-    return response
+    # --- Response JSON ---
+    explanation = {
+        "feature_name": pdp_iso.feature,
+        "feature_type": pdp_iso.feature_type,
+       
+        "pdp_values": pdp_iso.pdp.tolist(),
+    }
+
+    # Optional: include ICE
+    if hasattr(pdp_iso, "ice_lines") and pdp_iso.ice_lines is not None:
+        explanation["ice_lines"] = pdp_iso.ice_lines.tolist()
+
+    # Final response
+    return {
+        "prediction": prediction,
+        "probability": probability,
+        "pdp_explanation": explanation
+    }

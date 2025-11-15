@@ -5,6 +5,8 @@ import joblib
 import pandas as pd
 import os
 
+
+
 app = FastAPI()
 
 # Load the model

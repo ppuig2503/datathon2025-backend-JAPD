@@ -1,19 +1,7 @@
 
-from fastapi import APIRouter, HTTPException
-from typing import Optional, Dict, Any
-import pandas as pd
-import numpy as np
+'''
 
-# Import mlControler to access the loaded model and X_train sample
-from app.controlers import mlControler
-from app.types.mlTypes import PredictionInput
-
-router = APIRouter(
-    prefix="/ml",
-    tags=["Explainability"]
-)
-
-@router.post("/explain_lime", summary="Get LIME explanations for a prediction")
+@app.router.get("/explainability/local", tags=["explainability"])
 async def get_lime_explanation(input_data: PredictionInput):
     """
     Generate LIME explanations for a given input instance.
@@ -47,7 +35,7 @@ async def get_lime_explanation(input_data: PredictionInput):
     X_test = pd.DataFrame([input_data.model_dump()])
     
     # Get prediction
-    prediction = int(round(model.predict(X_test)[0]))
+    prediction = int(model.predict(X_test)[0])
     
     # Get probability
     prob_arr = predict_fn_lgbm(X_test)
@@ -67,3 +55,5 @@ async def get_lime_explanation(input_data: PredictionInput):
         "probability": probability,
         "explanation": explanation
     }
+
+'''

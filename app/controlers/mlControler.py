@@ -51,7 +51,7 @@ def predict(input_data: PredictionInput):
         df = pd.DataFrame([input_data.model_dump()])
         
         # Make prediction
-        prediction = int(model.predict(df)[0])
+        prediction = int(round(model.predict(df)[0]))
         
         return PredictionResponse(prediction=prediction)
     

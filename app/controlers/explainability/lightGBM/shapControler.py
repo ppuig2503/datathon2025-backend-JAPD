@@ -52,13 +52,14 @@ async def get_shap_global_explanation(input_data: PredictionInput):
 
     # Get model prediction
     try:
-        pred = float(model.predict_proba(X_test)[0][1])
+        pred = int(round(model.predict_proba(X_test)[0][1]))
     except:
-        pred = float(model.predict(X_test)[0])
+        pred = int(round(model.predict(X_test)[0]))
 
     return {
         "Model": "SHAP",
         "prediction": pred,
+        "probability": float(model.predict_proba(X_test)[0][1]) if hasattr(model, "predict_proba") else float(model.predict(X_test)[0]),
         "base_value": float(base_value),
         "shap_values": shap_dict,
     }

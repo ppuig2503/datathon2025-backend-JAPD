@@ -1,12 +1,12 @@
 from fastapi import FastAPI
-from app.controlers import mlControler, openAiControler
+from app.controlers import mlControler, openAiControler, explainabilityControler
 
 app = FastAPI(title="Datathon Backend API")
 
 # Include routers
 app.include_router(mlControler.router)
 app.include_router(openAiControler.router)
-
+app.include_router(explainabilityControler.router)
 
 @app.on_event("startup")
 async def startup_event():

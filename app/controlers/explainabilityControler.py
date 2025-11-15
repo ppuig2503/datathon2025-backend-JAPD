@@ -6,6 +6,7 @@ import numpy as np
 # Import mlControler to access the loaded model and X_train sample
 from app.controlers import mlControler
 from app.types.mlTypes import PredictionInput
+from data import data
 
 router = APIRouter(
     prefix="/ml",
@@ -61,6 +62,9 @@ async def get_lime_explanation(input_data: PredictionInput, num_features: Option
     )
     
     explanation = dict(exp.as_list())
+    
+    # Store the results in data.py before returning
+    data.set_local_data(prediction, probability, explanation)
     
     return {
         "prediction": prediction,

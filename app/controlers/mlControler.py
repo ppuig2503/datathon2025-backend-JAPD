@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 import joblib
 import pandas as pd
 import os
+from pathlib import Path
 from app.types.mlTypes import PredictionInput, PredictionResponse, BatchPredictionInput, BatchPredictionResponse
 
 router = APIRouter(
@@ -10,7 +11,8 @@ router = APIRouter(
 )
 
 # Load the model
-MODEL_PATH = "model.joblib"
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+MODEL_PATH = BASE_DIR / "models" / "lgbm" / "lgbm_classifier.joblib"
 model = None
 
 

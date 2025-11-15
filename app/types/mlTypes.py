@@ -17,7 +17,6 @@ class PredictionInput(BaseModel):
     competitor_Z: int
     competitor_X: int
     competitor_Y: int
-    cust_in_iberia: int
 
 
 class PredictionResponse(BaseModel):

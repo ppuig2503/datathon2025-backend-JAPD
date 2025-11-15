@@ -48,7 +48,7 @@ async def get_lime_explanation(input_data: PredictionInput):
     X_test = pd.DataFrame([input_data.model_dump()])
     
     # Get prediction
-    prediction = int(model.predict(X_test)[0])
+    prediction = int(round(model.predict(X_test)[0]))
     
     # Get probability
     prob_arr = predict_fn_lgbm(X_test)

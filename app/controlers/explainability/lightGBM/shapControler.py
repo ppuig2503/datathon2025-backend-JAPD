@@ -53,9 +53,9 @@ async def get_shap_global_explanation(input_data: PredictionInput):
 
     # Get model prediction
     try:
-        pred = float(model.predict_proba(X_test)[0][1])
+        pred = int(round(model.predict_proba(X_test)[0][1]))
     except:
-        pred = float(model.predict(X_test)[0])
+        pred = int(round(model.predict(X_test)[0]))
 
     # Store SHAP global results in data.py
     data.set_global_data(

@@ -1,11 +1,19 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from openai import OpenAI
 from typing import List
 import joblib
 import pandas as pd
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI()
+
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Load the model
 MODEL_PATH = "model.joblib"
@@ -57,6 +65,16 @@ class BatchPredictionInput(BaseModel):
 class BatchPredictionResponse(BaseModel):
     """Output schema for batch predictions"""
     predictions: List[int]
+
+
+class AnswerInput(BaseModel):
+    """Input schema for answer requests"""
+    question: str
+
+
+class AnswerResponse(BaseModel):
+    """Output schema for answer responses"""
+    answer: str
 
 
 @app.get("/")
@@ -127,6 +145,35 @@ def predict_batch(input_data: BatchPredictionInput):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+
+
+@app.post("/answer", response_model=AnswerResponse)
+def answer(input_data: AnswerInput):
+    """
+    Answer endpoint using OpenAI API.
+    
+    Args:
+        input_data: AnswerInput object with the question
+        
+    Returns:
+        AnswerResponse with the answer from OpenAI
+    """
+    try:
+        # TODO: Add system prompt and context as needed
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                # {"role": "system", "content": "Your system prompt here"},
+                {"role": "user", "content": input_data.question}
+            ]
+        )
+        
+        answer = response.choices[0].message.content
+        
+        return AnswerResponse(answer=answer)
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
 
 
 if __name__ == "__main__":

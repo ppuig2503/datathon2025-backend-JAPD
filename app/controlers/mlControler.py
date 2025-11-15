@@ -48,7 +48,7 @@ def predict(input_data: PredictionInput):
     
     try:
         # Convert input to DataFrame with correct column order
-        df = pd.DataFrame([input_data.dict()])
+        df = pd.DataFrame([input_data.model_dump()])
         
         # Make prediction
         prediction = int(model.predict(df)[0])
@@ -78,7 +78,7 @@ def predict_batch(input_data: BatchPredictionInput):
     
     try:
         # Convert input to DataFrame
-        df = pd.DataFrame([item.dict() for item in input_data.data])
+        df = pd.DataFrame([item.model_dump() for item in input_data.data])
         
         # Make predictions
         predictions = [int(p) for p in model.predict(df)]

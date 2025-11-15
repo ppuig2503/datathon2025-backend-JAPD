@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, HTTPException
 from typing import Optional, Dict, Any
 import pandas as pd
@@ -13,18 +14,16 @@ router = APIRouter(
     tags=["Explainability"]
 )
 
-@router.post("/explain", summary="Get LIME explanations for a prediction")
-async def get_lime_explanation(input_data: PredictionInput, num_features: Optional[int] = 5) -> Dict[str, Any]:
+@router.post("/explain_lime", summary="Get LIME explanations for a prediction")
+async def get_lime_explanation(input_data: PredictionInput):
     """
     Generate LIME explanations for a given input instance.
     
     Args:
         input_data: PredictionInput object with all required features
-        num_features: Number of top features to include in the explanation
         """
     import lime
     import lime.lime_tabular
-    import numpy as np
     import joblib
 
     # Load X_train from joblib
@@ -46,7 +45,7 @@ async def get_lime_explanation(input_data: PredictionInput, num_features: Option
     predict_fn_lgbm = lambda x: np.stack([1 - model.predict(x), model.predict(x)], axis=1)
 
     # Convert input to DataFrame
-    X_test = pd.DataFrame([input_data.dict()])
+    X_test = pd.DataFrame([input_data.model_dump()])
     
     # Get prediction
     prediction = int(model.predict(X_test)[0])
@@ -67,6 +66,7 @@ async def get_lime_explanation(input_data: PredictionInput, num_features: Option
     data.set_local_data(prediction, probability, explanation)
     
     return {
+        "Model": "LIME",
         "prediction": prediction,
         "probability": probability,
         "explanation": explanation

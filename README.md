@@ -265,7 +265,7 @@ curl -X POST "http://localhost:8000/ai/answer" \
 
 ## 🔗 Related Repositories
 
-- Frontend : [[Link to backend repository if available](https://github.com/Davi-Paiva/datathon-front.git)]
+- Frontend : [https://github.com/Davi-Paiva/datathon-front.git]
 
 ## 👥 Equipo
 

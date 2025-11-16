@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import List
 
 class PredictionInput(BaseModel):
     """Input schema for prediction requests"""
@@ -22,13 +21,3 @@ class PredictionInput(BaseModel):
 class PredictionResponse(BaseModel):
     """Output schema for prediction responses"""
     prediction: int
-
-
-class BatchPredictionInput(BaseModel):
-    """Input schema for batch predictions"""
-    data: List[PredictionInput]
-
-
-class BatchPredictionResponse(BaseModel):
-    """Output schema for batch predictions"""
-    predictions: List[int]

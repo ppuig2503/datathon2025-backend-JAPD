@@ -276,3 +276,79 @@ NO hables de casos individuales. Céntrate en patrones GLOBALES y tendencias del
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
+
+
+@router.post("/pdp_sentence", response_model=AnswerResponse)
+def generate_pdp_sentence():
+    """
+    Generate a one-sentence explanation of the PDP distribution for a given feature.
+    Uses PDP data stored in data.py from the /explain_pdp endpoint.
+    
+    Returns:
+        AnswerResponse with a concise sentence explaining the PDP pattern
+    """
+    try:
+        # Get PDP data from data.py
+        global_data = data.get_global_data()
+        
+        # Validate that PDP data exists
+        if global_data["pdp_data"] is None:
+            raise HTTPException(status_code=400, detail="No PDP data available. Please call /explain_pdp endpoint first.")
+        
+        pdp_data = global_data["pdp_data"]
+        feature_name = pdp_data.get('feature_type', 'N/A')
+        grids = pdp_data.get('grids', [])
+        pdp_values = pdp_data.get('pdp_values', [])
+        
+        if not grids or not pdp_values:
+            raise HTTPException(status_code=400, detail="PDP data is incomplete.")
+        
+        # Create context for the AI
+        min_grid, max_grid = min(grids), max(grids)
+        min_prob, max_prob = min(pdp_values), max(pdp_values)
+        start_prob, end_prob = pdp_values[0], pdp_values[-1]
+        
+        # Calculate trend
+        prob_change = end_prob - start_prob
+        prob_range = max_prob - min_prob
+        
+        user_prompt = f"""Analiza esta gráfica de Partial Dependence Plot (PDP) y resume en UNA SOLA FRASE cómo está distribuida y por qué es importante:
+
+FEATURE ANALIZADA: {feature_name}
+
+DATOS DE LA GRÁFICA:
+- Eje X (valores de la feature): de {min_grid:.2f} a {max_grid:.2f}
+- Eje Y (probabilidad de ganar): de {min_prob:.4f} a {max_prob:.4f}
+- Probabilidad al inicio (valor mínimo de la feature): {start_prob:.4f}
+- Probabilidad al final (valor máximo de la feature): {end_prob:.4f}
+- Cambio total de probabilidad: {prob_change:.4f}
+- Rango de variación: {prob_range:.4f}
+
+INSTRUCCIONES:
+- Genera UNA SOLA FRASE (máximo 25 palabras)
+- Describe la tendencia principal (crece, decrece, se mantiene estable, tiene forma de U, etc.)
+- Explica qué significa eso para el negocio en términos simples
+- NO uses términos técnicos como "PDP", "eje X", "eje Y"
+- Habla de la feature por su nombre y de la "probabilidad de ganar la oportunidad"
+- Sé directo y específico
+
+EJEMPLO DE RESPUESTA:
+"A mayor [nombre_feature], mayor probabilidad de ganar, especialmente por encima de [valor_clave]."
+"La probabilidad se mantiene estable independientemente del valor de [nombre_feature]."
+"Valores bajos de [nombre_feature] reducen drásticamente las posibilidades de ganar."
+"""
+        
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Eres un experto en interpretar gráficas de Partial Dependence Plot (PDP) y traducir patrones técnicos a insights de negocio concisos. Debes generar UNA SOLA FRASE clara y directa que explique la distribución de los puntos en la gráfica y su implicación práctica para el negocio."},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+        
+        sentence = response.choices[0].message.content
+        
+        return AnswerResponse(answer=sentence)
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")

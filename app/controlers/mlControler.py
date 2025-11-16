@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from pathlib import Path
 from app.types.mlTypes import PredictionInput, PredictionResponse
+from data import data
 
 router = APIRouter(
     prefix="/ml",
@@ -51,7 +52,9 @@ def predict(input_data: PredictionInput):
         df = pd.DataFrame([input_data.model_dump()])
         # Make prediction
         prediction = int(round(model.predict(df)[0]))
-        
+
+        data.set_input_data(features=input_data, prediction=prediction)
+
         return PredictionResponse(prediction=prediction)
     
     except Exception as e:

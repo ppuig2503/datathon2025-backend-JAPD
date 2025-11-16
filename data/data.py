@@ -1,6 +1,22 @@
 # Primitive database to store explainability results
 # This avoids ping-pong communication with frontend
 
+from app.types.mlTypes import PredictionInput
+
+input_data = {
+    "features": PredictionInput,
+    "prediction": int,
+}
+
+def set_input_data(features: PredictionInput, prediction: int):
+    """Store input data and prediction"""
+    input_data["features"] = features
+    input_data["prediction"] = prediction
+
+def get_input_data():
+    """Retrieve input data and prediction"""
+    return input_data
+
 explainability_data = {
     "local": {
         "prediction": None,

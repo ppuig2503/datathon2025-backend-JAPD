@@ -15,7 +15,7 @@ router = APIRouter(
 )
 
 @router.post("/explain_lime", summary="Get LIME explanations for a prediction")
-async def get_lime_explanation(input_data: PredictionInput):
+async def get_lime_explanation():
     """
     Generate LIME explanations for a given input instance.
     
@@ -25,6 +25,9 @@ async def get_lime_explanation(input_data: PredictionInput):
     import lime
     import lime.lime_tabular
     import joblib
+
+    input_data = data.get_input_data()["features"]
+    prediction = data.get_input_data()["prediction"]
 
     # Load X_train from joblib
     X_train = joblib.load("models/lgbm/X_train_sample.joblib")
@@ -46,9 +49,6 @@ async def get_lime_explanation(input_data: PredictionInput):
 
     # Convert input to DataFrame
     X_test = pd.DataFrame([input_data.model_dump()])
-    
-    # Get prediction
-    prediction = int(round(model.predict(X_test)[0]))
     
     # Get probability
     prob_arr = predict_fn_lgbm(X_test)

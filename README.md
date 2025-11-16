@@ -241,7 +241,3 @@ curl -X POST "http://localhost:8000/ai/answer" \
 ## 👥 Equipo
 
 Proyecto desarrollado por el equipo JAPD para el Datathon 2025.
-
-## 📄 Licencia
-
-Este proyecto es privado y confidencial.

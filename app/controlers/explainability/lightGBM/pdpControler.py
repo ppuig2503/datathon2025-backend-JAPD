@@ -12,15 +12,11 @@ from data import data
 
 router = APIRouter(prefix="/ml", tags=["Explainability"])
 
-
 from fastapi import APIRouter
 from pydantic import BaseModel
 import joblib
 import pandas as pd
 import numpy as np
-
-router = APIRouter()
-
 
 def predict_pdp(model, df):
     """Return probability for class 1"""

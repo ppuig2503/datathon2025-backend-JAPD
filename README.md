@@ -67,6 +67,29 @@ OPENAI_API_KEY=tu_clave_de_openai_aqui
 
 ## 🚀 Ejecución
 
+### Entrenar el Modelo (Opcional)
+
+El repositorio ya incluye un modelo pre-entrenado en `models/lgbm/lgbm_classifier.joblib`, por lo que **no es necesario entrenar el modelo** para ejecutar la API.
+
+Si deseas re-entrenar el modelo con nuevos datos:
+
+```bash
+cd LightGBM_Training_Alg
+python training_alg.py
+```
+
+Esto generará un nuevo archivo `lgbm_classifier.joblib` en la carpeta base del proyecto. Luego deberás moverlo manualmente a `models/lgbm/`:
+
+```bash
+# Linux / Mac / Git Bash
+mv lgbm_classifier.joblib ../models/lgbm/
+
+# Windows (cmd)
+move lgbm_classifier.joblib ..\models\lgbm\
+```
+
+> **Nota**: Asegúrate de tener el archivo `dataset.csv` en la carpeta `LightGBM_Training_Alg` antes de entrenar.
+
 ### Modo Desarrollo (Swagger)
 
 Para probar los endpoints directamente desde la interfaz Swagger:
@@ -136,6 +159,8 @@ datathon2025-backend-JAPD/
 │       ├── lgbm_classifier.joblib      # Modelo entrenado
 │       ├── X_train_sample.joblib       # Muestra de entrenamiento
 │       └── X_test.joblib               # Datos de test
+├── LightGBM_Training_Alg/
+│   └── training_alg.py                 # Script para entrenar el modelo (opcional)
 ├── main.py                             # Punto de entrada de la aplicación
 ├── install_deps.sh                     # Script de instalación de dependencias
 ├── .env                                # Variables de entorno (crear)

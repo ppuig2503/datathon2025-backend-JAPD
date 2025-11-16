@@ -49,11 +49,17 @@ def compute_pdp_avg(model, df, feature, n_samples=30, num_grid_points=50):
 
 # --- Endpoint ---
 @router.post("/explain_pdp", summary="Get PDP for a feature")
-async def get_pdp_explanation(input_data: PredictionInput, feature_to_analyze: str):
+async def get_pdp_explanation(feature_to_analyze: str):
     """
     Generate PDP explanation for a given feature.
     Returns a JSON-friendly array of [feature_value, avg_prediction].
     """
+    # Get input data and prediction from data.py
+    input_dict = data.get_input_data()
+    input_data = input_dict["features"]
+    prediction = input_dict["prediction"]
+    probability = input_dict["probability"]
+
     # Load model and data
     X_train = joblib.load("models/lgbm/X_train_sample.joblib")
     X_test = joblib.load("models/lgbm/X_test.joblib")
@@ -64,16 +70,10 @@ async def get_pdp_explanation(input_data: PredictionInput, feature_to_analyze: s
     input_df = pd.DataFrame([input_data.model_dump()])
     X_test = pd.concat([X_test, input_df], ignore_index=True)
 
-    # Make prediction for input
-    prediction = int(round(model.predict(input_df)[0]))
-    if hasattr(model, "predict_proba"): 
-        probability = float(model.predict_proba(input_df)[0, 1])
-    else:
-        probability = float(model.predict(input_df)[0])
     if feature_to_analyze not in X_test.columns:
         return {"error": f"Feature '{feature_to_analyze}' not found in dataset."}
+    
     # Compute averaged PDP
-
     averaged_pdp = compute_pdp_avg(
         model=model,
         df=X_test,
@@ -82,13 +82,19 @@ async def get_pdp_explanation(input_data: PredictionInput, feature_to_analyze: s
         num_grid_points=50  # adjust resolution
     )
 
-    # Prepare explanation
+    # Extract grids and values for better analysis
+    grids = [point[0] for point in averaged_pdp]
+    pdp_values = [point[1] for point in averaged_pdp]
+
+    # Prepare explanation with structured data
     explanation = {
-        "feature_name": feature_to_analyze,
+        "feature_type": feature_to_analyze,
+        "grids": grids,
+        "pdp_values": pdp_values,
         "pdp_avg": averaged_pdp
     }
 
-    # Optionally store PDP in global data
+    # Store PDP in global data
     data.set_global_data(pdp_data=explanation)
 
     # Return JSON response

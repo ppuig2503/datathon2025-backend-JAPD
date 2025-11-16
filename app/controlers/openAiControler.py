@@ -64,7 +64,23 @@ def answer(input_data: AnswerInput):
         # Add PDP context if available
         if global_data["pdp_data"] is not None:
             pdp_data = global_data["pdp_data"]
-            context_parts.append(f"\nPARTIAL DEPENDENCE:\n- Feature analizada: {pdp_data.get('feature_type', 'N/A')}")
+            feature_name = pdp_data.get('feature_type', 'N/A')
+            context_parts.append(f"\nPARTIAL DEPENDENCE:\n- Feature analizada: {feature_name}")
+            
+            if pdp_data.get('grids') and pdp_data.get('pdp_values'):
+                grids = pdp_data['grids']
+                values = pdp_data['pdp_values']
+                min_val, max_val = min(values), max(values)
+                context_parts.append(f"- Rango de valores de la feature: {min(grids):.2f} a {max(grids):.2f}")
+                context_parts.append(f"- Probabilidad predicha varía de {min_val:.4f} a {max_val:.4f}")
+                
+                # Determine trend
+                if values[-1] > values[0] + 0.05:
+                    context_parts.append("- Tendencia: A mayor valor de esta feature, MAYOR probabilidad de ganar")
+                elif values[-1] < values[0] - 0.05:
+                    context_parts.append("- Tendencia: A mayor valor de esta feature, MENOR probabilidad de ganar")
+                else:
+                    context_parts.append("- Tendencia: Esta feature tiene impacto moderado/constante en la probabilidad")
         
         # Combine all context
         context = "\n\n".join(context_parts) if context_parts else "No hay datos de explicabilidad disponibles aún."
@@ -76,6 +92,7 @@ Contexto del caso de uso:
 - Empresa: Schneider Electric.
 - Problema: predecir si una oportunidad comercial (venta) será GANADA (1) o PERDIDA (0).
 - Modelo: clasificador binario que devuelve una probabilidad de ganar la oportunidad.
+- En la pantalla: el usuario estará viendo la predicción (GANADA/PERDIDA) y la probabilidad asociada, junto con explicaciones de por qué el modelo tomó esa decisión, junto con un gráfico formado por las features más importantes y su impacto.
 
 DATOS DE EXPLICABILIDAD DISPONIBLES:
 {context}
@@ -91,7 +108,7 @@ Cómo debes responder:
 - Estilo: Claro, profesional y cercano. Sin jerga técnica innecesaria.
 - Usa SIEMPRE los datos específicos proporcionados en el contexto arriba. NO inventes números.
 - Si te preguntan algo que no está en los datos disponibles, dilo claramente.
-- Respuestas concisas: 2-4 párrafos máximo por respuesta.
+- Respuestas concisas: 2 párrafos máximo por respuesta.
 
 Ejemplos de preguntas que podrías recibir:
 - "¿Por qué esta oportunidad se clasificó como ganada/perdida?"
@@ -160,7 +177,7 @@ Este texto se mostrará en una página de resultados. Debe ser:
 - Focus on abnormal
 - Traducir las contribuciones numéricas a lenguaje de negocio
 - Incluir qué factores empujaron hacia GANADA y cuáles hacia PERDIDA
-- 5 líneas máximo
+- 3 líneas máximo
 - Lenguaje claro para usuarios de negocio
 
 NO hagas generalizaciones sobre el modelo. Céntrate solo en explicar ESTA predicción específica."""
@@ -240,7 +257,7 @@ Este texto se mostrará en una página de resultados. Debe ser:
 - Identificar entre dos i cuatro razones principales por las que el modelo toma sus decisiones
 - Focus on abnormal
 - Traducir a lenguaje de negocio con ejemplos prácticos
-- 5 líneas máximo
+- 3 líneas máximo
 - Lenguaje claro para usuarios de negocio
 
 NO hables de casos individuales. Céntrate en patrones GLOBALES y tendencias del modelo en general."""

@@ -6,12 +6,14 @@ from app.types.mlTypes import PredictionInput
 input_data = {
     "features": PredictionInput,
     "prediction": int,
+    "probability": float
 }
 
-def set_input_data(features: PredictionInput, prediction: int):
+def set_input_data(features: PredictionInput, prediction: int, probability: float):
     """Store input data and prediction"""
     input_data["features"] = features
     input_data["prediction"] = prediction
+    input_data["probability"] = probability
 
 def get_input_data():
     """Retrieve input data and prediction"""

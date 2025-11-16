@@ -28,6 +28,7 @@ async def get_lime_explanation():
 
     input_data = data.get_input_data()["features"]
     prediction = data.get_input_data()["prediction"]
+    probability = data.get_input_data()["probability"]
 
     # Load X_train from joblib
     X_train = joblib.load("models/lgbm/X_train_sample.joblib")
@@ -49,10 +50,6 @@ async def get_lime_explanation():
 
     # Convert input to DataFrame
     X_test = pd.DataFrame([input_data.model_dump()])
-    
-    # Get probability
-    prob_arr = predict_fn_lgbm(X_test)
-    probability = float(prob_arr[0, 1])
 
     exp = explainer.explain_instance(
         X_test.values[0],

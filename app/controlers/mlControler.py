@@ -51,9 +51,10 @@ def predict(input_data: PredictionInput):
         # Convert input to DataFrame with correct column order
         df = pd.DataFrame([input_data.model_dump()])
         # Make prediction
-        prediction = int(round(model.predict(df)[0]))
+        probability = float(model.predict(df)[0])
+        prediction = int(round(probability))
 
-        data.set_input_data(features=input_data, prediction=prediction)
+        data.set_input_data(features=input_data, prediction=prediction, probability=probability)
 
         return PredictionResponse(prediction=prediction)
     

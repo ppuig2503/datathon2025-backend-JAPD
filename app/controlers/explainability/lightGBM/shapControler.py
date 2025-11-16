@@ -54,6 +54,10 @@ async def get_shap_global_explanation():
             reverse=True
         )
     )
+    # Store SHAP global data
+    data.set_global_data(
+        shap_global=global_shap
+    )
 
     return {
         "model": "SHAP-global",
@@ -63,12 +67,18 @@ async def get_shap_global_explanation():
 
 
 
-@router.post("/explain_shap", summary="Get SHAP local explanation for a prediction")
-async def get_shap_local_explanation(input_data: PredictionInput):
+@router.post("/explain_shap_local", summary="Get SHAP local explanation for a prediction")
+async def get_shap_local_explanation():
 
     model = mlControler.model
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
+
+    # Get input data and prediction from data.py
+    input_dict = data.get_input_data()
+    input_data = input_dict["features"]
+    prediction = input_dict["prediction"]
+    probability = input_dict["probability"]
 
     X_test = pd.DataFrame([input_data.model_dump()])
 
@@ -99,13 +109,13 @@ async def get_shap_local_explanation(input_data: PredictionInput):
         )
     )
 
-    # prediction & probability
-    if hasattr(model, "predict_proba"):
-        probability = float(model.predict_proba(X_test)[0][1])
-        prediction = int(probability >= 0.5)
-    else:
-        probability = float(model.predict(X_test)[0])
-        prediction = int(round(probability))
+    # Store SHAP local data
+    data.set_local_data(
+        prediction=prediction,
+        probability=probability,
+        explanation=shap_dict,
+        model_type="SHAP"
+    )
 
     data.set_local_data(prediction, probability, shap_dict, model_type="SHAP")
     return {

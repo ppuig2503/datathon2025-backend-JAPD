@@ -263,6 +263,17 @@ curl -X POST "http://localhost:8000/ai/answer" \
   -d '{"question": "¿Qué variables son más importantes?"}'
 ```
 
+## 🔗 Related Repositories
+
+- Frontend : [[Link to backend repository if available](https://github.com/Davi-Paiva/datathon-front.git)]
+
 ## 👥 Equipo
 
-Proyecto desarrollado por el equipo JAPD para el Datathon 2025.
+- Alejandro Poole
+- Davi Paiva
+- Joan Vicente
+- Pau Puig
+
+## 📄 License
+
+Este proyecto es parte del Datahon FME 2025.

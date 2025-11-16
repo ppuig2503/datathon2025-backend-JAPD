@@ -8,7 +8,8 @@ from app.types.openAiTypes import (
     LocalExplanationInput, 
     LocalExplanationResponse,
     GlobalExplanationInput,
-    GlobalExplanationResponse
+    GlobalExplanationResponse,
+    PDPResponse
 )
 from data import data
 
@@ -278,7 +279,7 @@ NO hables de casos individuales. Céntrate en patrones GLOBALES y tendencias del
         raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
 
 
-@router.post("/pdp_sentence", response_model=AnswerResponse)
+@router.post("/pdp_sentence", response_model=PDPResponse)
 def generate_pdp_sentence():
     """
     Generate a one-sentence explanation of the PDP distribution for a given feature.
@@ -348,7 +349,7 @@ EJEMPLO DE RESPUESTA:
         
         sentence = response.choices[0].message.content
         
-        return AnswerResponse(answer=sentence)
+        return PDPResponse(text=sentence)
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")

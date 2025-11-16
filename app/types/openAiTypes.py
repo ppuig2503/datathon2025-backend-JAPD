@@ -10,6 +10,10 @@ class AnswerResponse(BaseModel):
     """Output schema for answer responses"""
     answer: str
 
+class PDPResponse(BaseModel):
+    """Output schema for answer responses"""
+    text: str
+
 
 class LocalExplanationInput(BaseModel):
     """Input schema for local explanation text generation"""

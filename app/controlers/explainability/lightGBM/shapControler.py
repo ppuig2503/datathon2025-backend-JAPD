@@ -117,6 +117,7 @@ async def get_shap_local_explanation():
         model_type="SHAP"
     )
 
+    data.set_local_data(prediction, probability, shap_dict, model_type="SHAP")
     return {
         "model": "SHAP-local",
         "prediction": prediction,

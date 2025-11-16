@@ -1,5 +1,6 @@
 from app.controlers.explainability.lightGBM import limeControler , shapControler, pdpControler
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.controlers import mlControler, openAiControler
 
 app = FastAPI(title="Datathon Backend API")
@@ -10,7 +11,11 @@ app.include_router(openAiControler.router)
 app.include_router(limeControler.router)
 app.include_router(shapControler.router)
 app.include_router(pdpControler.router)
-
+app.add_middleware(CORSMiddleware,
+    allow_origins=["*"],        # en producción mejor limitar
+    allow_credentials=True,
+    allow_methods=["*"],        # GET, POST, OPTIONS, etc.
+    allow_headers=["*"],)
 
 @app.on_event("startup")
 async def startup_event():

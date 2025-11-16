@@ -54,6 +54,10 @@ async def get_shap_global_explanation():
             reverse=True
         )
     )
+    # Store SHAP global data
+    data.set_global_data(
+        shap_global=global_shap
+    )
 
     return {
         "model": "SHAP-global",

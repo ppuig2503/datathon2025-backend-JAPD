@@ -63,7 +63,7 @@ async def get_shap_global_explanation():
 
 
 
-@router.post("/explain_shap_local", summary="Get SHAP local explanation for a prediction")
+@router.post("/explain_shap", summary="Get SHAP local explanation for a prediction")
 async def get_shap_local_explanation(input_data: PredictionInput):
 
     model = mlControler.model
@@ -107,6 +107,7 @@ async def get_shap_local_explanation(input_data: PredictionInput):
         probability = float(model.predict(X_test)[0])
         prediction = int(round(probability))
 
+    data.set_local_data(prediction, probability, shap_dict, model_type="SHAP")
     return {
         "model": "SHAP-local",
         "prediction": prediction,

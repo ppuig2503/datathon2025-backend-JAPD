@@ -6,6 +6,7 @@ from app.types.mlTypes import PredictionInput
 input_data = {
     "features": PredictionInput,
     "prediction": int,
+    "probability": float
 }
 
 def set_input_data(features: PredictionInput, prediction: int):

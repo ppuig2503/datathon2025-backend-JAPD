@@ -52,8 +52,9 @@ def predict(input_data: PredictionInput):
         df = pd.DataFrame([input_data.model_dump()])
         # Make prediction
         prediction = int(round(model.predict(df)[0]))
+        probability = float(model.predict_proba(df)[0][1])
 
-        data.set_input_data(features=input_data, prediction=prediction)
+        data.set_input_data(features=input_data, prediction=prediction, probability=probability)
 
         return PredictionResponse(prediction=prediction)
     

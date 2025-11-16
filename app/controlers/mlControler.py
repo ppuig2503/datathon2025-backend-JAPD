@@ -49,7 +49,6 @@ def predict(input_data: PredictionInput):
     try:
         # Convert input to DataFrame with correct column order
         df = pd.DataFrame([input_data.model_dump()])
-        
         # Make prediction
         prediction = int(round(model.predict(df)[0]))
         

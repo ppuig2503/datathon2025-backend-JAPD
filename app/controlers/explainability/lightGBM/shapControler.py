@@ -15,6 +15,60 @@ router = APIRouter(prefix="/ml", tags=["Explainability"])
 
 @router.post("/explain_shap", summary="Get SHAP explanations for a prediction")
 async def get_shap_global_explanation(input_data: PredictionInput):
+
+    model = mlControler.model
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    X_test = pd.DataFrame([input_data.model_dump()])
+
+    # SHAP explainer for LightGBM
+    explainer = shap.TreeExplainer(model)
+
+    try:
+        shap_values = explainer.shap_values(X_test)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SHAP computation failed: {e}")
+
+    # LightGBM binary classifier → list of arrays
+    if isinstance(shap_values, list):   # [class0, class1]
+        shap_vec = shap_values[1][0, :]     # SHAP of class 1
+        base_value = float(explainer.expected_value[1])
+    else:
+        shap_vec = shap_values[0, :]
+        base_value = float(explainer.expected_value)
+
+    feature_names = X_test.columns.tolist()
+
+    # Convert & sort by |impact|
+    shap_dict = dict(
+        sorted(
+            ((f, float(v)) for f, v in zip(feature_names, shap_vec)),
+            key=lambda x: abs(x[1]),
+            reverse=True
+        )
+    )
+
+    # Probability & prediction
+    if hasattr(model, "predict_proba"):
+        probability = float(model.predict_proba(X_test)[0][1])
+        prediction = int(probability >= 0.5)
+    else:
+        probability = float(model.predict(X_test)[0])
+        prediction = int(round(probability))
+
+    return {
+        "model": "SHAP",
+        "prediction": prediction,
+        "probability": probability,
+        "base_value": base_value,       # still in log-odds for LGBM
+        "shap_values": shap_dict        # *** raw JSON values ***
+    }
+
+
+
+@router.post("/explain_shap", summary="Get SHAP explanations for a prediction")
+async def get_shap_local_explanation(input_data: PredictionInput):
     """Generate SHAP explanation and return structured JSON instead of a plot."""
     model = mlControler.model
     if model is None:

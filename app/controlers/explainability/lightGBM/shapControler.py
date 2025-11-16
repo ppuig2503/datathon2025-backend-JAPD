@@ -8,13 +8,63 @@ from fastapi.responses import StreamingResponse
 from app.types.mlTypes import PredictionInput
 from app.controlers import mlControler
 from data import data
-
+import numpy as np
 
 router = APIRouter(prefix="/ml", tags=["Explainability"])
 
 
-@router.post("/explain_shap", summary="Get SHAP explanations for a prediction")
-async def get_shap_global_explanation(input_data: PredictionInput):
+
+@router.post("/explain_shap_global", summary="Get GLOBAL SHAP feature importance")
+async def get_shap_global_explanation():
+
+    model = mlControler.model
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    # -------- IMPORTANT: GLOBAL EXPLANATION MUST USE A DATASET ----------
+    # Replace this with your actual training or reference dataset
+    try:
+        X_ref = joblib.load("models/lgbm/X_train_sample.joblib")   # <-- use your stored training data
+    except:
+        raise HTTPException(status_code=500, detail="Training data not available for GLOBAL SHAP")
+
+    # SHAP explainer
+    explainer = shap.TreeExplainer(model)
+
+    # Compute SHAP values for the reference dataset
+    try:
+        shap_values = explainer.shap_values(X_ref)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SHAP computation failed: {e}")
+
+    feature_names = X_ref.columns.tolist()
+
+    # LightGBM binary classifier → list of 2 matrices
+    if isinstance(shap_values, list):
+        shap_matrix = np.abs(shap_values[1])   # abs SHAP for class 1
+        
+    else:
+        shap_matrix = np.abs(shap_values)
+
+    # GLOBAL IMPORTANCE = mean absolute SHAP values across dataset
+    global_shap = dict(
+        sorted(
+            zip(feature_names, shap_matrix.mean(axis=0)),
+            key=lambda x: x[1],
+            reverse=True
+        )
+    )
+
+    return {
+        "model": "SHAP-global",
+        "global_importance": global_shap,
+    }
+
+
+
+
+@router.post("/explain_shap_local", summary="Get SHAP local explanation for a prediction")
+async def get_shap_local_explanation(input_data: PredictionInput):
 
     model = mlControler.model
     if model is None:
@@ -31,8 +81,8 @@ async def get_shap_global_explanation(input_data: PredictionInput):
         raise HTTPException(status_code=500, detail=f"SHAP computation failed: {e}")
 
     # LightGBM binary classifier → list of arrays
-    if isinstance(shap_values, list):   # [class0, class1]
-        shap_vec = shap_values[1][0, :]     # SHAP of class 1
+    if isinstance(shap_values, list):
+        shap_vec = shap_values[1][0, :]
         base_value = float(explainer.expected_value[1])
     else:
         shap_vec = shap_values[0, :]
@@ -40,16 +90,16 @@ async def get_shap_global_explanation(input_data: PredictionInput):
 
     feature_names = X_test.columns.tolist()
 
-    # Convert & sort by |impact|
+    # SORT local SHAP by absolute impact
     shap_dict = dict(
         sorted(
-            ((f, float(v)) for f, v in zip(feature_names, shap_vec)),
+            ((feature_names[i], float(shap_vec[i])) for i in range(len(feature_names))),
             key=lambda x: abs(x[1]),
             reverse=True
         )
     )
 
-    # Probability & prediction
+    # prediction & probability
     if hasattr(model, "predict_proba"):
         probability = float(model.predict_proba(X_test)[0][1])
         prediction = int(probability >= 0.5)
@@ -58,69 +108,9 @@ async def get_shap_global_explanation(input_data: PredictionInput):
         prediction = int(round(probability))
 
     return {
-        "model": "SHAP",
+        "model": "SHAP-local",
         "prediction": prediction,
         "probability": probability,
-        "base_value": base_value,       # still in log-odds for LGBM
-        "shap_values": shap_dict        # *** raw JSON values ***
-    }
-
-
-
-@router.post("/explain_shap", summary="Get SHAP explanations for a prediction")
-async def get_shap_local_explanation(input_data: PredictionInput):
-    """Generate SHAP explanation and return structured JSON instead of a plot."""
-    model = mlControler.model
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
-    # Convert incoming data
-    X_test = pd.DataFrame([input_data.model_dump()])
-    
-    # SHAP explainer
-    explainer = shap.TreeExplainer(model)
-
-    try:
-        shap_values = explainer.shap_values(X_test)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"SHAP computation failed: {e}")
-
-    # --- LightGBM binary classifier ---
-    if isinstance(shap_values, list):
-        shap_vec = shap_values[1][0]   # class 1 contributions
-        base_value = explainer.expected_value[1]
-    else:
-        # Regression or single output
-        shap_vec = shap_values[0]
-        base_value = explainer.expected_value
-
-    feature_names = X_test.columns.tolist()
-    feature_input = X_test.iloc[0].to_dict()
-
-    # Combine feature -> shap contribution
-    shap_dict = {
-        feature_names[i]: float(shap_vec[i])
-        for i in range(len(feature_names))
-    }
-
-    # Sort by absolute impact
-
-    # Get model prediction
-    try:
-        pred = int(round(model.predict_proba(X_test)[0][1]))
-    except:
-        pred = int(round(model.predict(X_test)[0]))
-
-    # Store SHAP global results in data.py
-    data.set_global_data(
-        shap_global=shap_dict,
-        shap_base_value=float(base_value)
-    )
-
-    return {
-        "Model": "SHAP",
-        "prediction": pred,
-        "probability": float(model.predict_proba(X_test)[0][1]) if hasattr(model, "predict_proba") else float(model.predict(X_test)[0]),
-        "base_value": float(base_value),
-        "shap_values": shap_dict,
+        "base_value": base_value,        # SHAP baseline (log-odds for LGBM)
+        "shap_values_local": shap_dict   # <-- LOCAL SHAP VALUES ONLY
     }
